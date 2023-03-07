@@ -1,0 +1,83 @@
+service: node-aws-lambda-crud
+frameworkVersion: '2 || 3'
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+   # Version of hashing algorithm used by Serverless Framework for function packaging
+  lambdaHashingVersion: '20201221'
+  region: ap-northeast-2
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:*
+      Resource:
+        - arn:aws:dynamodb:ap-northeast-2:897982041490:table/Dynamoose-Table 
+
+functions:
+  hello:
+    handler: services/handler.hello
+    events:
+      - http:
+          path: /
+          method: get
+  createTask:
+    handler: services/addTask.addTask
+    events:
+      - http:
+          path: /tasks
+          method: post
+  getTaskByID:
+    handler: services/getTaskByID.getTaskByID
+    events:
+      - http:
+          path: /tasks/{id}
+          method: get
+  getTaskByIDs:
+    handler: services/getTaskByIDs.getTaskByIDs
+    events:
+      - http:
+          path: /tasksbyIds
+          method: get
+  getTasks:
+    handler: services/getTasks.getTasks
+    events:
+      - http:
+          path: /tasks
+          method: get
+          
+  updateTask:
+    handler: services/updateTask.updateTask
+    events:
+      - http:
+          path: /tasks/{id}
+          method: put
+
+  deleteTask:
+    handler: services/deleteTask.deleteTask
+    events:
+      - http:
+          path: /tasks
+          method: delete
+  deleteTasks:
+    handler: services/deleteTasks.deleteTasks
+    events:
+      - http:
+          path: /multasks
+          method: delete
+
+resources:
+  Resources:
+    TaskTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Dynamoose-Table
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+plugins:
+  - serverless-offline
