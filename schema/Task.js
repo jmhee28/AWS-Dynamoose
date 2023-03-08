@@ -1,6 +1,6 @@
 const dynamoose = require("dynamoose");
 
-const schema = new dynamoose.Schema(
+const taskSchema = new dynamoose.Schema(
   {
     id: {
       type: String,
@@ -15,6 +15,13 @@ const schema = new dynamoose.Schema(
         required: true
     },
     description: String,
+    user:{
+      "index":{
+        "name": "user",
+        "global":true
+      },
+      type: String
+    }
   },
   {
     timestamps: {
@@ -45,7 +52,9 @@ const schema = new dynamoose.Schema(
 );
 
 //dynodb table name
-const TasksModel = dynamoose.model("Dynamoose-Table", schema, {
+const TasksModel = dynamoose.model("Dynamoose-Table", taskSchema, {
   throughput: "ON_DEMAND",
 });
+
+
 module.exports = { TasksModel };

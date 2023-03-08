@@ -6,11 +6,12 @@ const { TasksModel } = require('../schema/Task');
 const addTask = async (event) => {
     try {
         const request = JSON.parse(event.body);
-        const { title, description } = request;
+        const { title, description, user } = request;
 
         const result = await TasksModel.create({//it returns a Item initializer that you can use to create instances of the given model.
             id: v4(),
             title,
+            user,
             description
         });
 
@@ -25,6 +26,7 @@ const addTask = async (event) => {
         };
     }
 };
+
 
 const deleteTasks = async (event) => {
     try {
@@ -64,6 +66,7 @@ const getTaskByIDs = async (event) => {
     try {
       const ids = event.multiValueQueryStringParameters;
       const result = await TasksModel.batchGet(Object.values(ids.id));
+
       return {
         statusCode: 200,
         body: JSON.stringify(result),
@@ -72,7 +75,6 @@ const getTaskByIDs = async (event) => {
       console.log(error);
       return {
         statusCode: 404,
-        
         body: error
       };
     }
@@ -116,6 +118,5 @@ module.exports = {
     deleteTasks,
     getTaskByIDs,
     getTasks,
-    updateTask
-
+    updateTask,
 };

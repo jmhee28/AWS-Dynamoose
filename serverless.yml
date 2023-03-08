@@ -1,7 +1,7 @@
 service: node-aws-lambda-crud
 frameworkVersion: '2 || 3'
 
-# 람다배포시 package에서 node_modules 제외
+# 람다배포시 package에서 제외
 package:
   exclude:
     - node_modules/**
@@ -21,7 +21,7 @@ provider:
     - Effect: Allow
       Action:
         - dynamodb:*
-      Resource:
+      Resource: 
         - arn:aws:dynamodb:ap-northeast-2:897982041490:table/Dynamoose-Table 
 
 functions:
@@ -45,7 +45,6 @@ functions:
       - http: #delete by id
           path: /tasks
           method: delete
- 
 
 
 resources:
