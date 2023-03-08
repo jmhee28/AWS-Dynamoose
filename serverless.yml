@@ -1,12 +1,22 @@
 service: node-aws-lambda-crud
 frameworkVersion: '2 || 3'
 
+# 람다배포시 package에서 node_modules 제외
+package:
+  exclude:
+    - node_modules/**
+    - package.json
+    - package-lock.json
+
 provider:
   name: aws
   runtime: nodejs16.x
    # Version of hashing algorithm used by Serverless Framework for function packaging
   lambdaHashingVersion: '20201221'
   region: ap-northeast-2
+  environment:
+    #환경변수에 NODE_PATH 설정 node_modules 위치
+    NODE_PATH: "./:/opt/node_modules"
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -15,56 +25,28 @@ provider:
         - arn:aws:dynamodb:ap-northeast-2:897982041490:table/Dynamoose-Table 
 
 functions:
-  hello:
-    handler: services/handler.hello
+  tasks:
+    handler: services/Tasks.Tasks
+    layers:
+      - arn:aws:lambda:ap-northeast-2:897982041490:layer:NodeDataStreamUtils:latest
     events:
-      - http:
-          path: /
-          method: get
-  createTask:
-    handler: services/addTask.addTask
-    events:
-      - http:
+      - http: #create
           path: /tasks
           method: post
-  getTaskByID:
-    handler: services/getTaskByID.getTaskByID
-    events:
-      - http:
-          path: /tasks/{id}
-          method: get
-  getTaskByIDs:
-    handler: services/getTaskByIDs.getTaskByIDs
-    events:
-      - http:
-          path: /tasksbyIds
-          method: get
-  getTasks:
-    handler: services/getTasks.getTasks
-    events:
-      - http:
+      - http: #getalltasks
           path: /tasks
           method: get
-          
-  updateTask:
-    handler: services/updateTask.updateTask
-    events:
-      - http:
+      - http: #get task by ids
+          path: /tasksbyids
+          method: get
+      - http: #update
           path: /tasks/{id}
           method: put
-
-  deleteTask:
-    handler: services/deleteTask.deleteTask
-    events:
-      - http:
+      - http: #delete by id
           path: /tasks
           method: delete
-  deleteTasks:
-    handler: services/deleteTasks.deleteTasks
-    events:
-      - http:
-          path: /multasks
-          method: delete
+ 
+
 
 resources:
   Resources:
@@ -81,3 +63,4 @@ resources:
             KeyType: HASH
 plugins:
   - serverless-offline
+  - serverless-latest-layer-version

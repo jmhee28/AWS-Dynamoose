@@ -41,11 +41,11 @@ const schema = new dynamoose.Schema(
         }
     } //it will use the default attribute names of createdAt & updatedAt.
   }
+
 );
 
 //dynodb table name
 const TasksModel = dynamoose.model("Dynamoose-Table", schema, {
-//   create: true,
   throughput: "ON_DEMAND",
 });
 module.exports = { TasksModel };
