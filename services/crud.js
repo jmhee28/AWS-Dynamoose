@@ -5,14 +5,17 @@ const { TasksModel } = require('../schema/Task');
 
 const addTask = async (event) => {
     try {
+        // console.log(event);
         const request = JSON.parse(event.body);
-        const { title, description, user } = request;
-
+        
+        const { title, description, user, comments } = request;
+        
         const result = await TasksModel.create({//it returns a Item initializer that you can use to create instances of the given model.
             id: v4(),
             title,
+            description,
             user,
-            description
+            comments
         });
 
         return {
