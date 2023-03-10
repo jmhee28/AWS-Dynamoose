@@ -22,44 +22,91 @@ provider:
       Action:
         - dynamodb:*
       Resource: 
-        - arn:aws:dynamodb:ap-northeast-2:897982041490:table/Dynamoose-Table 
+        - arn:aws:dynamodb:ap-northeast-2:897982041490:table/BoardTable 
+        - arn:aws:dynamodb:ap-northeast-2:897982041490:table/UserTable 
 
 functions:
-  tasks:
-    handler: services/Tasks.Tasks
+  Posts:
+    handler: services/posts.Posts
     layers:
       - arn:aws:lambda:ap-northeast-2:897982041490:layer:NodeDataStreamUtils:latest
     events:
       - http: #create
-          path: /tasks
+          path: /addUser
+          method: post
+      - http: #create
+          path: /posts
           method: post
       - http: #getalltasks
-          path: /tasks
+          path: /posts
           method: get
       - http: #get task by ids
-          path: /tasksbyids
+          path: /postsbyids
           method: get
       - http: #update
-          path: /tasks/{id}
+          path: /posts/{id}
           method: put
       - http: #delete by id
-          path: /tasks
+          path: /posts
           method: delete
-
+      - http: #page
+          path: /page
+          method: get
+      - http: 
+          path: /test
+          method: get
 
 resources:
   Resources:
-    TaskTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: Dynamoose-Table
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: id
-            AttributeType: S
-        KeySchema:
-          - AttributeName: id
-            KeyType: HASH
+    BoardTable:
+          Type: AWS::DynamoDB::Table
+          Properties:
+            TableName: BoardTable
+            BillingMode: PAY_PER_REQUEST
+            AttributeDefinitions:
+              - AttributeName: categories
+                AttributeType: S
+              - AttributeName: userid
+                AttributeType: S
+              - AttributeName: id
+                AttributeType: S
+              - AttributeName: createdAt
+                AttributeType: N
+            KeySchema:
+              - AttributeName: categories
+                KeyType: HASH
+              - AttributeName: id
+                KeyType: RANGE
+            GlobalSecondaryIndexes:
+              - IndexName: userIndex
+                KeySchema:
+                  - AttributeName: userid
+                    KeyType: HASH
+                  - AttributeName: createdAt
+                    KeyType: RANGE
+                Projection:
+                  ProjectionType: 'ALL'
+            
+        
+
+    userTable:
+        Type: AWS::DynamoDB::Table
+        Properties:
+          TableName: UserTable
+          BillingMode: PAY_PER_REQUEST
+          AttributeDefinitions:
+            - AttributeName: id
+              AttributeType: S
+            - AttributeName: createdAt
+              AttributeType: N
+          KeySchema: # dynamodb의 key를 설정합니다.
+            - AttributeName: id
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+
+    
+
 plugins:
   - serverless-offline
   - serverless-latest-layer-version
