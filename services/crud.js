@@ -3,46 +3,42 @@
 const { v4 } = require('uuid');
 const { BoardsModel } = require('../schema/Board');
 const { UsersModel } = require('../schema/User');
+// import { SortOrder } from 'dynamoose/dist/General';
 
-const addUser = async (event) => {
-    try {
-        // console.log(event);
-        const request = JSON.parse(event.body);
-        
-        const { email} = request;
-        
-        const result = await UsersModel.create({//it returns a Item initializer that you can use to create instances of the given model.
-            id: v4(),
-            email
-        });
-
-        return {
-            statusCode: 200,
-            body: JSON.stringify(result),
-        };
-    } catch (error) {
-        return {
-            statusCode: 404,
-            body: error
-        };
-    }
-};
 const addPost = async (event) => {
     try {
         // console.log(event);
         const request = JSON.parse(event.body);
         
-        const { categories, title, content, userid, upperid} = request;
+        const { title, content, userid, upperid} = request;
         
         const result = await BoardsModel.create({//it returns a Item initializer that you can use to create instances of the given model.
-            categories,
+            categories:"Post",
             id: v4(),
             title,
             content,
             userid,
             upperid
         });
-
+        return {
+            statusCode: 200,
+            body: JSON.stringify(result),
+        };
+    } catch (error) {
+        console.log(error);
+        return {
+            statusCode: 404,
+            body: error
+        };
+    }
+};
+// get all posts
+const getPosts = async (event) => {
+    try {
+        
+        const result = await BoardsModel.query("categories").using("categoryIndex")
+        .eq("Post").sort("descending").exec(); 
+  
         return {
             statusCode: 200,
             body: JSON.stringify(result),
@@ -56,6 +52,42 @@ const addPost = async (event) => {
     }
 };
 
+// get all posts by board id
+const getPostsbyBoard = async (event) => {
+    try {
+        const { id } = event.pathParameters;
+        console.log(id);
+        const result = await BoardsModel.query("upperid").eq(id).sort("descending").exec();
+        return {
+            statusCode: 200,
+            body: JSON.stringify(result),
+        };
+    } catch (error) {
+        console.log(error);
+        return {
+            statusCode: 404,
+            body: error
+        };
+    }
+};
+//get post by one id
+const getPostByID = async (event) => {
+    try {
+        const { id } = event.pathParameters;
+      const result = await BoardsModel.get({ categories:"Post", id: id });
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify(result),
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        statusCode: 404,
+        body: error
+      };
+    }
+  };
 
 const deletePosts = async (event) => {
     try {
@@ -99,21 +131,7 @@ const updatePost = async (event) => {
         const { id } = event.pathParameters;
         const { ...data } = JSON.parse(event.body);
 
-        const result = await BoardsModel.update({ id }, { ...data });
-        return {
-            statusCode: 200,
-            body: JSON.stringify(result),
-        };
-    } catch (error) {
-        return {
-            statusCode: 404,
-            body: error
-        };
-    }
-};
-const getPosts = async (event) => {
-    try {
-        const result = await BoardsModel.scan().exec(); // will scan all items with no filters or options
+        const result = await BoardsModel.update({categories:"Post", id }, { ...data });
         return {
             statusCode: 200,
             body: JSON.stringify(result),
@@ -126,13 +144,26 @@ const getPosts = async (event) => {
     }
 };
 
+
 const getPagePosts = async (event) => {
     try {
         const { countPerPage, pageNo } = event.multiValueQueryStringParameters;
-        console.log(countPerPage[0], pageNo);
+        
         const cpp =  Number(countPerPage[0]);
-        const pn = Number(pageNo);
-        const result = await BoardsModel.scan().parallel(countPerPage).limit();
+        const pn = Number(pageNo[0]);
+        console.log(cpp, pn);
+        let arr =[]
+
+        let afterQ = await BoardsModel.query("categories").eq("post").sort("descending").limit(cpp).exec();
+        arr.push(afterQ);
+        for(let i = 0; i < pn-1; i++ )
+        {            
+            if (afterQ.lastKey == undefined) { break; }
+            afterQ = await BoardsModel.query("categories").eq("post").sort("descending").limit(cpp).exec();
+            arr.push(afterQ);
+        }
+
+        const result = arr.slice(arr.length-cpp);
         console.log(result);
         return {
             statusCode: 200,
@@ -148,8 +179,12 @@ const getPagePosts = async (event) => {
 };
 const test = async (event) => {
     try {
-        console.log(event);
-        const result = await BoardsModel.query("categories").eq("post").where("upperid").eq("2a2150fc-be64-46ce-bd7c-d428a52c5c1b").exec();
+        // console.log(event);
+        const result = await BoardsModel.query("categories").eq("post").where("title").contains("post").sort("descending").limit(100).exec();
+        // const remais = await BoardsModel.query("upperid").eq("b5f36431-fe32-4bdd-a1e7-11e81db0ea9a").sort("descending").startAt(result.lastKey).exec();
+        // const temp = await BoardsModel.query("upperid").eq("a871cc91-241d-4c41-8aec-b001780710c6").using("upperIdIndex").exec();
+        // console.log(remais);
+        // console.log(temp);
         console.log(result);
         return {
             statusCode: 200,
@@ -166,12 +201,13 @@ const test = async (event) => {
 
 
 module.exports = {
-    addUser,
     addPost,
     deletePosts,
+    getPostByID,
     getPostByIDs,
     getPosts,
     updatePost,
     getPagePosts,
+    getPostsbyBoard,
     test
 };

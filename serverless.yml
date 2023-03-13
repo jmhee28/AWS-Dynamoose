@@ -43,6 +43,9 @@ functions:
       - http: #get task by ids
           path: /postsbyids
           method: get
+      - http: #get task by one id
+          path: /posts/{id}
+          method: get
       - http: #update
           path: /posts/{id}
           method: put
@@ -55,6 +58,18 @@ functions:
       - http: 
           path: /test
           method: get
+      - http: #create board
+          path: /boards
+          method: post
+      - http: #update board
+          path: /boards/{id}
+          method: put
+      - http: #get all board
+          path: /boards
+          method: get
+      - http: #get posts by board
+          path: /postsbyboard/{id}
+          method: get
 
 resources:
   Resources:
@@ -66,9 +81,11 @@ resources:
             AttributeDefinitions:
               - AttributeName: categories
                 AttributeType: S
+              - AttributeName: id
+                AttributeType: S
               - AttributeName: userid
                 AttributeType: S
-              - AttributeName: id
+              - AttributeName: upperid
                 AttributeType: S
               - AttributeName: createdAt
                 AttributeType: N
@@ -86,7 +103,22 @@ resources:
                     KeyType: RANGE
                 Projection:
                   ProjectionType: 'ALL'
-            
+              - IndexName: upperIdIndex
+                KeySchema:
+                  - AttributeName: upperid
+                    KeyType: HASH
+                  - AttributeName: createdAt
+                    KeyType: RANGE
+                Projection:
+                  ProjectionType: 'ALL'
+              - IndexName: categoryIndex
+                KeySchema:
+                  - AttributeName: categories
+                    KeyType: HASH
+                  - AttributeName: createdAt
+                    KeyType: RANGE
+                Projection:
+                  ProjectionType: 'ALL'
         
 
     userTable:
